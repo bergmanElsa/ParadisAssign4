@@ -20,10 +20,10 @@ class ChatServer implements Runnable {
     private final Socket clientSocket;
     private String clientName = "";
 
-    private ChatServer(Socket clientSocket, CopyOnWriteArrayList messages, int index) {
+    private ChatServer(Socket clientSocket, CopyOnWriteArrayList messages) {
         this.clientSocket = clientSocket;
         this.messages = messages;
-        this.index = index;
+
 
 
     }
@@ -53,11 +53,15 @@ class ChatServer implements Runnable {
             new Thread(() -> {
                 int currentIndex = messages.size();
                 while (true) {
-                    if (currentIndex <= messages.size()) {
-                        finalSocketWriter.println(messages.get(currentIndex - 1));
+                    if (currentIndex < messages.size()) {
+                        finalSocketWriter.println(messages.get(currentIndex));
                         currentIndex++;
-
-
+                    } else {
+                        try {
+                            Thread.sleep(100);
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
                     }
                 }
             }).start();
@@ -100,11 +104,11 @@ class ChatServer implements Runnable {
             serverSocket = new ServerSocket(PORT);
             SocketAddress serverSocketAddress = serverSocket.getLocalSocketAddress();
             System.out.println("Listening (" + serverSocketAddress + ").");
-            CopyOnWriteArrayList<String> messages = new CopyOnWriteArrayList<>();
+            CopyOnWriteArrayList<String> messages = new CopyOnWriteArrayList<String>();
 
             while (true) {
                 clientSocket = serverSocket.accept();
-                executor.execute(new ChatServer(clientSocket, messages, messages.size()));
+                executor.execute(new ChatServer(clientSocket, messages));
             }
         } catch (Exception exception) {
             System.out.println(exception);
